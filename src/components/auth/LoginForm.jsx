@@ -1,43 +1,158 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+// import { useState } from 'react';
+// import { Link } from 'react-router-dom';
+// import { useAuth } from '@/context/AuthContext';
+
+// const errorMessages = {
+//   'auth/user-not-found': 'El correo no está registrado.',
+//   'auth/wrong-password': 'Contraseña incorrecta.',
+//   'auth/invalid-email': 'El formato del correo es inválido.',
+//   'auth/too-many-requests': 'Demasiados intentos. Por favor, intenta más tarde.',
+//   'default': 'Ocurrió un error al iniciar sesión. Inténtalo de nuevo.'
+// };
+
+// export const LoginForm = () => {
+//   const { login } = useAuth();
+//   const [email, setEmail] = useState('');
+//   const [password, setPassword] = useState('');
+//   const [error, setError] = useState(null);
+//   const [loading, setLoading] = useState(false);
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setError(null);
+
+//     if (!email || !password) {
+//       setError('Por favor, completa todos los campos.');
+//       return;
+//     }
+
+//     setLoading(true);
+//     try {
+//       await login(email, password);
+//       // Redirección o actualización de estado manejada por el AuthContext o el enrutador
+//     } catch (err) {
+//       console.error(err);
+//       const message = errorMessages[err.code] || errorMessages['default'];
+//       setError(message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   return (
+//     <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+//       <div className="text-center">
+//         <h2 className="text-3xl font-extrabold text-gray-900">LavadoTrack</h2>
+//         <p className="mt-2 text-sm text-gray-600">Inicia sesión en tu cuenta</p>
+//       </div>
+
+//       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+//         {error && (
+//           <div role="alert" className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+//             {error}
+//           </div>
+//         )}
+
+//         <div className="space-y-4">
+//           <div>
+//             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+//               Correo Electrónico
+//             </label>
+//             <input
+//               id="email"
+//               name="email"
+//               type="email"
+//               autoComplete="email"
+//               required
+//               value={email}
+//               onChange={(e) => setEmail(e.target.value)}
+//               className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+//               placeholder="tu@correo.com"
+//             />
+//           </div>
+
+//           <div>
+//             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+//               Contraseña
+//             </label>
+//             <input
+//               id="password"
+//               name="password"
+//               type="password"
+//               autoComplete="current-password"
+//               required
+//               value={password}
+//               onChange={(e) => setPassword(e.target.value)}
+//               className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+//               placeholder="••••••••"
+//             />
+//           </div>
+//         </div>
+
+//         <button
+//           type="submit"
+//           disabled={loading}
+//           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+//         >
+//           {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+//         </button>
+
+//         <div className="text-center mt-4">
+//           <p className="text-sm text-gray-600">
+//             ¿No tienes cuenta?{' '}
+//             <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+//               Regístrate aquí
+//             </Link>
+//           </p>
+//         </div>
+//       </form>
+//     </div>
+//   );
+// };
+
+// export default LoginForm;
+
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 const errorMessages = {
-  'auth/user-not-found': 'El correo no está registrado.',
-  'auth/wrong-password': 'Contraseña incorrecta.',
-  'auth/invalid-email': 'El formato del correo es inválido.',
-  'auth/too-many-requests': 'Demasiados intentos. Por favor, intenta más tarde.',
-  'default': 'Ocurrió un error al iniciar sesión. Inténtalo de nuevo.'
-};
+  'Invalid login credentials': 'Correo o contraseña incorrectos.',
+  'Email not confirmed': 'Debes confirmar tu correo.',
+  'User not found': 'El usuario no existe.',
+  'default': 'Ocurrió un error al iniciar sesión.'
+}
 
 export const LoginForm = () => {
-  const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     if (!email || !password) {
-      setError('Por favor, completa todos los campos.');
-      return;
+      setError('Por favor, completa todos los campos.')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      await login(email, password);
-      // Redirección o actualización de estado manejada por el AuthContext o el enrutador
+      await login(email, password)
+      navigate('/home')
     } catch (err) {
-      console.error(err);
-      const message = errorMessages[err.code] || errorMessages['default'];
-      setError(message);
+      console.error(err)
+      const message = errorMessages[err.message] || errorMessages['default']
+      setError(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
@@ -48,66 +163,46 @@ export const LoginForm = () => {
 
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
         {error && (
-          <div role="alert" className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+          <div className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
             {error}
           </div>
         )}
 
         <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Correo Electrónico
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="tu@correo.com"
-            />
-          </div>
+          <input
+            type="email"
+            placeholder="Correo"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+          />
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="••••••••"
-            />
-          </div>
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full px-3 py-2 border rounded"
+          />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full py-2 text-white bg-blue-600 rounded"
         >
           {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
         </button>
 
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            ¿No tienes cuenta?{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Regístrate aquí
-            </Link>
-          </p>
-        </div>
+        <p className="text-sm text-center">
+          ¿No tienes cuenta?{' '}
+          <Link to="/register" className="text-blue-600">
+            Regístrate
+          </Link>
+        </p>
       </form>
     </div>
-  );
-};
+  )
+}
 
-export default LoginForm;
+export default LoginForm

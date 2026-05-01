@@ -1,19 +1,41 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+// import { Navigate } from 'react-router-dom';
+// import { useAuth } from '@/context/AuthContext';
+
+// export const ProtectedRoute = ({ children }) => {
+//   const { currentUser } = useAuth();
+
+//   // Opcional: Podrías añadir aquí la comprobación de "loading" desde AuthContext
+//   // si el AuthProvider pasara ese estado, para mostrar un spinner mientras verifica.
+  
+//   if (!currentUser) {
+//     // Si no hay usuario, redirigimos a la página de login
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   // Si hay usuario, renderizamos el componente hijo
+//   return children;
+// };
+
+// export default ProtectedRoute;
+
+import { Navigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 export const ProtectedRoute = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { user, loading } = useAuth()
 
-  // Opcional: Podrías añadir aquí la comprobación de "loading" desde AuthContext
-  // si el AuthProvider pasara ese estado, para mostrar un spinner mientras verifica.
-  
-  if (!currentUser) {
-    // Si no hay usuario, redirigimos a la página de login
-    return <Navigate to="/login" replace />;
+  // ⏳ Mientras verifica la sesión
+  if (loading) {
+    return <p className="text-center mt-10">Cargando...</p>
   }
 
-  // Si hay usuario, renderizamos el componente hijo
-  return children;
-};
+  // 🔒 Si no hay usuario → redirigir
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
 
-export default ProtectedRoute;
+  // ✅ Usuario autenticado
+  return children
+}
+
+export default ProtectedRoute
