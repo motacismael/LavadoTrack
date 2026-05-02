@@ -1,22 +1,18 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-// TODO: Reemplaza con tu configuración real de Firebase
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-  storageBucket: "TU_PROYECTO.appspot.com",
-  messagingSenderId: "TU_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyBoyHES7bZTspsdP7JkX0cNv2YDjObkmTo",
+  authDomain : "lavadotrack.firebaseapp.com" , 
+  projectId: "lavadotrack",
+  storageBucket: "lavadotrack.firebasestorage.app",
+  messagingSenderId: "787708094388",
+  appId: "1:787708094388:web:3fa60f67ab44000d6074e1",
+  measurementId: "G-DCT7HKEPRM"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
-
-// Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);

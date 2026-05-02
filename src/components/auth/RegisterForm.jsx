@@ -9,8 +9,9 @@ const errorMessages = {
   'default': 'Ocurrió un error al registrarse. Inténtalo de nuevo.'
 };
 
-export const RegisterForm = () => {
+const RegisterForm = () => {
   const { register } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,6 +21,9 @@ export const RegisterForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    console.log("👉 Register clicked");
+    console.log("register function:", register);
 
     if (!email || !password || !confirmPassword) {
       setError('Por favor, completa todos los campos.');
@@ -31,14 +35,31 @@ export const RegisterForm = () => {
       return;
     }
 
+    if (password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
     setLoading(true);
+
     try {
-      await register(email, password);
-      // Redirección manejada por el router o el estado global si es exitoso
+      console.log("👉 Enviando a Firebase...");
+
+      const result = await register(email, password);
+
+      console.log("👉 Registro exitoso:", result);
+
+      setEmail('');
+      setPassword('');
+      setConfirmPassword('');
+
     } catch (err) {
-      console.error(err);
-      const message = errorMessages[err.code] || errorMessages['default'];
+      console.log("🔥 FIREBASE ERROR CODE:", err?.code);
+      console.log("🔥 FIREBASE ERROR MESSAGE:", err?.message);
+
+      const message = errorMessages[err?.code] || err?.message || errorMessages.default;
       setError(message);
+
     } finally {
       setLoading(false);
     }
@@ -46,87 +67,63 @@ export const RegisterForm = () => {
 
   return (
     <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+
       <div className="text-center">
-        <h2 className="text-3xl font-extrabold text-gray-900">LavadoTrack</h2>
-        <p className="mt-2 text-sm text-gray-600">Crea una cuenta nueva</p>
+        <h2 className="text-3xl font-extrabold text-gray-900">
+          LavadoTrack
+        </h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Crea una cuenta nueva
+        </p>
       </div>
 
       <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+
         {error && (
           <div role="alert" className="p-4 text-sm text-red-700 bg-red-100 rounded-lg">
             {error}
           </div>
         )}
 
-        <div className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Correo Electrónico
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="tu@correo.com"
-            />
-          </div>
+        <input
+          type="email"
+          placeholder="Correo Electrónico"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Contraseña
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="••••••••"
-            />
-          </div>
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-              Confirmar Contraseña
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-              placeholder="••••••••"
-            />
-          </div>
-        </div>
+        <input
+          type="password"
+          placeholder="Confirmar Contraseña"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full bg-green-600 text-white p-2 rounded"
         >
           {loading ? 'Registrando...' : 'Registrarse'}
         </button>
 
-        <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            ¿Ya tienes cuenta?{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Inicia sesión aquí
-            </Link>
-          </p>
-        </div>
+        <p className="text-center text-sm">
+          ¿Ya tienes cuenta?{' '}
+          <Link to="/login" className="text-blue-600">
+            Inicia sesión
+          </Link>
+        </p>
+
       </form>
     </div>
   );
