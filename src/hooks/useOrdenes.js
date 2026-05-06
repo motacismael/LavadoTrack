@@ -7,6 +7,7 @@ import {
   addDoc,
   updateDoc,
   doc,
+  deleteDoc,       
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '@/firebase/config';
@@ -90,12 +91,24 @@ export const useOrdenes = () => {
     (o) => o.estado === "lista"
   );
 
-  return {
+  // 🔥 Eliminar orden
+const deleteOrden = async (id) => {
+  try {
+    const ordenRef = doc(db, 'ordenes', id);
+    await deleteDoc(ordenRef);
+  } catch (err) {
+    console.error("Error al eliminar orden:", err);
+    throw err;
+  }
+};
+
+ return {
     ordenes,
     loading,
     error,
     addOrden,
     updateEstado,
+    deleteOrden,    
     ordenesListas
   };
 };
