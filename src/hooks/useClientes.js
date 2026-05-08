@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/firebase/config';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from "react";
+import { supabase } from "@/supabase/config";
+import { useAuth } from "@/context/AuthContext";
 
 export const useClientes = () => {
   const [clientes, setClientes] = useState([]);
@@ -16,73 +15,61 @@ export const useClientes = () => {
       return;
     }
 
-    setLoading(true);
-    const q = query(
-      collection(db, 'clientes'),
-      where('userId', '==', currentUser.uid)
-    );
+    const fetchClientes = async () => {
+      setLoading(true);
+      const { data, error: fetchError } = await supabase
+        .from("clientes")
+        .select("*")
+        .eq("user_id", currentUser.id)
+        .order("created_at", { ascending: false });
 
-    const unsubscribe = onSnapshot(q, 
-      (querySnapshot) => {
-        const clientesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setClientes(clientesData);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        console.error("Error al obtener clientes:", err);
+      if (fetchError) {
         setError("Error al cargar los clientes.");
-        setLoading(false);
+      } else {
+        setClientes((data || []).map((r) => ({ ...r, createdAt: r.created_at })));
+        setError(null);
       }
-    );
+      setLoading(false);
+    };
 
-    return () => unsubscribe();
+    fetchClientes();
   }, [currentUser]);
 
   const addCliente = async (clienteData) => {
     if (!currentUser) throw new Error("Usuario no autenticado");
-    try {
-      const docRef = await addDoc(collection(db, 'clientes'), {
-        ...clienteData,
-        userId: currentUser.uid,
-        createdAt: serverTimestamp()
-      });
-      return docRef;
-    } catch (err) {
-      console.error("Error al añadir cliente:", err);
-      throw err;
-    }
+    const { data, error: insertError } = await supabase
+      .from("clientes")
+      .insert({ ...clienteData, user_id: currentUser.id })
+      .select()
+      .single();
+    if (insertError) throw insertError;
+    // Actualiza el estado local directamente
+    const nuevo = { ...data, createdAt: data.created_at };
+    setClientes((prev) => [nuevo, ...prev]);
+    return data;
   };
 
   const updateCliente = async (id, updatedData) => {
-    try {
-      const clienteRef = doc(db, 'clientes', id);
-      await updateDoc(clienteRef, updatedData);
-    } catch (err) {
-      console.error("Error al actualizar cliente:", err);
-      throw err;
-    }
+    const { error: updateError } = await supabase
+      .from("clientes")
+      .update(updatedData)
+      .eq("id", id);
+    if (updateError) throw updateError;
+    // Actualiza el estado local directamente
+    setClientes((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, ...updatedData } : c))
+    );
   };
 
   const deleteCliente = async (id) => {
-    try {
-      const clienteRef = doc(db, 'clientes', id);
-      await deleteDoc(clienteRef);
-    } catch (err) {
-      console.error("Error al eliminar cliente:", err);
-      throw err;
-    }
+    const { error: deleteError } = await supabase
+      .from("clientes")
+      .delete()
+      .eq("id", id);
+    if (deleteError) throw deleteError;
+    // Actualiza el estado local directamente
+    setClientes((prev) => prev.filter((c) => c.id !== id));
   };
 
-  return {
-    clientes,
-    loading,
-    error,
-    addCliente,
-    updateCliente,
-    deleteCliente
-  };
+  return { clientes, loading, error, addCliente, updateCliente, deleteCliente };
 };

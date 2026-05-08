@@ -1,23 +1,30 @@
-import { useState, useEffect } from 'react';
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  doc,
-  deleteDoc,       
-  serverTimestamp
-} from 'firebase/firestore';
-import { db } from '@/firebase/config';
-import { useAuth } from '@/context/AuthContext';
+import { useState, useEffect } from "react";
+import { supabase } from "@/supabase/config";
+import { useAuth } from "@/context/AuthContext";
 
 export const useOrdenes = () => {
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { currentUser } = useAuth();
+
+  const fetchOrdenes = async () => {
+    if (!currentUser) return;
+    setLoading(true);
+    const { data, error: fetchError } = await supabase
+      .from("ordenes")
+      .select("*")
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (fetchError) {
+      setError("Error al cargar órdenes");
+    } else {
+      setOrdenes((data || []).map((r) => ({ ...r, createdAt: r.created_at })));
+      setError(null);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     if (!currentUser) {
@@ -26,89 +33,56 @@ export const useOrdenes = () => {
       return;
     }
 
-    setLoading(true);
+    fetchOrdenes();
 
-    const q = query(
-      collection(db, 'ordenes'),
-      where('userId', '==', currentUser.uid)
-    );
+    // Nombre único por instancia para evitar conflictos entre componentes
+    const channelName = `ordenes-${currentUser.id}-${Math.random()}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "ordenes",
+          filter: `user_id=eq.${currentUser.id}`,
+        },
+        () => fetchOrdenes()
+      )
+      .subscribe();
 
-    const unsubscribe = onSnapshot(q,
-      (snapshot) => {
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-
-        setOrdenes(data);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        console.error("Error al obtener órdenes:", err);
-        setError("Error al cargar órdenes");
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
+    return () => supabase.removeChannel(channel);
   }, [currentUser]);
 
-  // 🔥 Crear orden
   const addOrden = async (ordenData) => {
     if (!currentUser) throw new Error("Usuario no autenticado");
-
-    try {
-      const ticket = "T-" + Date.now();
-
-      await addDoc(collection(db, 'ordenes'), {
-        ...ordenData,
-        ticket,
-        estado: "recibida",
-        userId: currentUser.uid,
-        createdAt: serverTimestamp()
-      });
-
-    } catch (err) {
-      console.error("Error al crear orden:", err);
-      throw err;
-    }
+    const ticket = "T-" + Date.now();
+    const { error: insertError } = await supabase.from("ordenes").insert({
+      ...ordenData,
+      ticket,
+      estado: "recibida",
+      user_id: currentUser.id,
+    });
+    if (insertError) throw insertError;
   };
 
-  // 🔥 Cambiar estado
   const updateEstado = async (id, estado) => {
-    try {
-      const ordenRef = doc(db, 'ordenes', id);
-      await updateDoc(ordenRef, { estado });
-    } catch (err) {
-      console.error("Error al actualizar estado:", err);
-      throw err;
-    }
+    const { error: updateError } = await supabase
+      .from("ordenes")
+      .update({ estado })
+      .eq("id", id);
+    if (updateError) throw updateError;
   };
 
-  // 🔥 FILTRO CLAVE DEL PROYECTO
-  const ordenesListas = ordenes.filter(
-    (o) => o.estado === "lista"
-  );
-
-  // 🔥 Eliminar orden
-const deleteOrden = async (id) => {
-  try {
-    const ordenRef = doc(db, 'ordenes', id);
-    await deleteDoc(ordenRef);
-  } catch (err) {
-    console.error("Error al eliminar orden:", err);
-    throw err;
-  }
-};
-
- return {
-    ordenes,
-    loading,
-    error,
-    addOrden,
-    updateEstado,
-    deleteOrden,    
-    ordenesListas
+  const deleteOrden = async (id) => {
+    const { error: deleteError } = await supabase
+      .from("ordenes")
+      .delete()
+      .eq("id", id);
+    if (deleteError) throw deleteError;
   };
+
+  const ordenesListas = ordenes.filter((o) => o.estado === "lista");
+
+  return { ordenes, loading, error, addOrden, updateEstado, deleteOrden, ordenesListas };
 };

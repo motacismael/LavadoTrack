@@ -1,19 +1,24 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-const errorMessages = {
-  'auth/user-not-found': 'El correo no está registrado.',
-  'auth/wrong-password': 'Contraseña incorrecta.',
-  'auth/invalid-email': 'El formato del correo es inválido.',
-  'auth/too-many-requests': 'Demasiados intentos. Por favor, intenta más tarde.',
-  'default': 'Ocurrió un error al iniciar sesión. Inténtalo de nuevo.'
+// Supabase devuelve mensajes en inglés; los mapeamos a español
+const getErrorMessage = (message = "") => {
+  if (message.includes("Invalid login credentials"))
+    return "Correo o contraseña incorrectos.";
+  if (message.includes("Email not confirmed"))
+    return "Debes confirmar tu correo antes de iniciar sesión.";
+  if (message.includes("Too many requests"))
+    return "Demasiados intentos. Por favor, intenta más tarde.";
+  if (message.includes("User not found"))
+    return "El correo no está registrado.";
+  return "Ocurrió un error al iniciar sesión. Inténtalo de nuevo.";
 };
 
 export const LoginForm = () => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -22,18 +27,16 @@ export const LoginForm = () => {
     setError(null);
 
     if (!email || !password) {
-      setError('Por favor, completa todos los campos.');
+      setError("Por favor, completa todos los campos.");
       return;
     }
 
     setLoading(true);
     try {
       await login(email, password);
-      // Redirección o actualización de estado manejada por el AuthContext o el enrutador
     } catch (err) {
       console.error(err);
-      const message = errorMessages[err.code] || errorMessages['default'];
-      setError(message);
+      setError(getErrorMessage(err?.message));
     } finally {
       setLoading(false);
     }
@@ -60,7 +63,6 @@ export const LoginForm = () => {
             </label>
             <input
               id="email"
-              name="email"
               type="email"
               autoComplete="email"
               required
@@ -77,7 +79,6 @@ export const LoginForm = () => {
             </label>
             <input
               id="password"
-              name="password"
               type="password"
               autoComplete="current-password"
               required
@@ -94,12 +95,12 @@ export const LoginForm = () => {
           disabled={loading}
           className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
         </button>
 
         <div className="text-center mt-4">
           <p className="text-sm text-gray-600">
-            ¿No tienes cuenta?{' '}
+            ¿No tienes cuenta?{" "}
             <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
               Regístrate aquí
             </Link>

@@ -5,10 +5,11 @@ import RegisterForm from './components/auth/RegisterForm';
 import ClienteList from './components/clientes/ClienteList';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Dashboard from "./components/Dashboard";
-import OrdenForm from './components/ordenes/OrdenForm';
+import NuevaOrdenModal from './components/ordenes/NuevaOrdenModal';
 import OrdenList from './components/ordenes/OrdenList';
+import { useOrdenes } from './hooks/useOrdenes';
+import { useClientes } from './hooks/useClientes';
 
-// Ícono de lavandería para el logo
 const WashIcon = () => (
   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -16,7 +17,6 @@ const WashIcon = () => (
   </svg>
 );
 
-// NavLink con indicador de página activa
 const NavLink = ({ to, children }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -36,19 +36,16 @@ const NavLink = ({ to, children }) => {
 
 function App() {
   const { currentUser, logout } = useAuth();
+  const ordenesHook = useOrdenes();
+  const clientesHook = useClientes();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50 flex flex-col">
 
-      {/* ── HEADER ─────────────────────────────────────────────── */}
       <header className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
 
-          {/* LOGO — clickeable */}
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 group"
-          >
+          <Link to="/" className="flex items-center gap-2.5 group">
             <div className="bg-blue-600 text-white p-1.5 rounded-xl shadow-sm group-hover:bg-blue-700 transition-colors">
               <WashIcon />
             </div>
@@ -64,41 +61,36 @@ function App() {
 
           {currentUser && (
             <div className="flex items-center gap-2 sm:gap-4">
-
-              {/* NAVEGACIÓN */}
               <nav className="flex gap-1">
                 <NavLink to="/">Inicio</NavLink>
                 <NavLink to="/clientes">Clientes</NavLink>
                 <NavLink to="/ordenes">Órdenes</NavLink>
               </nav>
 
-              {/* USUARIO + LOGOUT */}
-<div className="flex items-center gap-2 pl-3 border-l border-gray-200">
-  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0">
-    {currentUser.email?.[0]?.toUpperCase()}
-  </div>
-  <span className="hidden sm:block text-xs text-gray-500 max-w-[120px] truncate">
-    {currentUser.email}
-  </span>
-  <button
-    onClick={logout}
-    title="Cerrar sesión"
-    className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-all"
-  >
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-    </svg>
-    <span className="hidden sm:block">Salir</span>
-  </button>
-</div>
-
+              <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm shrink-0">
+                  {currentUser.email?.[0]?.toUpperCase()}
+                </div>
+                <span className="hidden sm:block text-xs text-gray-500 max-w-[120px] truncate">
+                  {currentUser.email}
+                </span>
+                <button
+                  onClick={logout}
+                  title="Cerrar sesión"
+                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-all"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="hidden sm:block">Salir</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
       </header>
 
-      {/* ── CONTENIDO ───────────────────────────────────────────── */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         <Routes>
 
@@ -124,7 +116,6 @@ function App() {
             }
           />
 
-          {/* HOME */}
           <Route
             path="/"
             element={
@@ -144,15 +135,10 @@ function App() {
                       >
                         Clientes
                       </Link>
-                      <Link
-                        to="/ordenes"
-                        className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-all shadow-sm"
-                      >
-                        + Nueva Orden
-                      </Link>
+                      <NuevaOrdenModal />
                     </div>
                   </div>
-                  <Dashboard />
+                  <Dashboard ordenesHook={ordenesHook} />
                 </div>
               </ProtectedRoute>
             }
@@ -162,7 +148,7 @@ function App() {
             path="/clientes"
             element={
               <ProtectedRoute>
-                <ClienteList />
+                <ClienteList hook={clientesHook} />
               </ProtectedRoute>
             }
           />
@@ -172,9 +158,11 @@ function App() {
             element={
               <ProtectedRoute>
                 <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-gray-800">Órdenes</h2>
-                  <OrdenForm />
-                  <OrdenList />
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-gray-800">Órdenes</h2>
+                    <NuevaOrdenModal />
+                  </div>
+                  <OrdenList hook={ordenesHook} />
                 </div>
               </ProtectedRoute>
             }
@@ -183,7 +171,6 @@ function App() {
         </Routes>
       </main>
 
-      {/* ── FOOTER ──────────────────────────────────────────────── */}
       <footer className="text-center text-xs text-gray-300 py-4">
         LavadoTrack © {new Date().getFullYear()}
       </footer>

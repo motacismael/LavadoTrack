@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useClientes } from '@/hooks/useClientes';
 
-export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
-  const { addCliente, updateCliente } = useClientes();
+export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel, hook }) => {
+  const { addCliente, updateCliente } = hook;
   const [nombre, setNombre] = useState(clienteAEditar?.nombre || '');
   const [telefono, setTelefono] = useState(clienteAEditar?.telefono || '');
   const [email, setEmail] = useState(clienteAEditar?.email || '');
@@ -13,13 +12,11 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
     e.preventDefault();
     setError(null);
 
-    // Validaciones
     if (!nombre.trim() || !telefono.trim()) {
       setError('El nombre y el teléfono son obligatorios.');
       return;
     }
 
-    // Validación de formato de teléfono (solo números, permitiendo espacios opcionales o guiones si se deseara, pero la regla estricta es solo números)
     const phoneRegex = /^[0-9]+$/;
     if (!phoneRegex.test(telefono.replace(/\s+/g, ''))) {
       setError('El teléfono debe contener solo números.');
@@ -31,7 +28,7 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
       const clienteData = {
         nombre: nombre.trim(),
         telefono: telefono.replace(/\s+/g, ''),
-        email: email.trim() || null, // Opcional
+        email: email.trim() || null,
       };
 
       if (clienteAEditar?.id) {
@@ -39,10 +36,9 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
       } else {
         await addCliente(clienteData);
       }
-      
+
       if (onSuccess) onSuccess();
-      
-      // Limpiar el formulario si es uno nuevo
+
       if (!clienteAEditar) {
         setNombre('');
         setTelefono('');
@@ -50,7 +46,7 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
       }
     } catch (err) {
       console.error(err);
-      setError('Ocurrió un error al guardar el cliente. Inténtalo de nuevo.');
+      setError('Ocurrió un error al guardar el cliente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,7 +57,7 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
       <h3 className="text-xl font-bold text-gray-800 mb-4">
         {clienteAEditar ? 'Editar Cliente' : 'Nuevo Cliente'}
       </h3>
-      
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
           <div role="alert" className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">
@@ -111,7 +107,7 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
               type="button"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 transition-colors"
             >
               Cancelar
             </button>
@@ -119,7 +115,7 @@ export const ClienteForm = ({ clienteAEditar, onSuccess, onCancel }) => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
             {isSubmitting ? 'Guardando...' : 'Guardar Cliente'}
           </button>

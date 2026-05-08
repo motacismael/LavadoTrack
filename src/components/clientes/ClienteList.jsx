@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { useClientes } from '@/hooks/useClientes';
 import ClienteForm from './ClienteForm';
 
-export const ClienteList = () => {
-  const { clientes, loading, error, deleteCliente } = useClientes();
+export const ClienteList = ({ hook }) => {
+  const { clientes, loading, error, deleteCliente } = hook;
   const [clienteAEditar, setClienteAEditar] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(null);
@@ -54,7 +53,7 @@ export const ClienteList = () => {
         {!isFormVisible && (
           <button
             onClick={() => setIsFormVisible(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition-colors"
           >
             Añadir Cliente
           </button>
@@ -66,6 +65,7 @@ export const ClienteList = () => {
           clienteAEditar={clienteAEditar}
           onSuccess={closeForm}
           onCancel={closeForm}
+          hook={hook}
         />
       )}
 
@@ -80,15 +80,13 @@ export const ClienteList = () => {
               <li key={cliente.id} className="p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <p className="text-lg font-medium text-gray-900 truncate">
-                      {cliente.nombre}
-                    </p>
-                    <p className="text-sm text-gray-500 flex items-center mt-1">
-                      <span className="font-medium mr-1">Tel:</span> {cliente.telefono}
+                    <p className="text-lg font-medium text-gray-900 truncate">{cliente.nombre}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      <span className="font-medium mr-1">Tel:</span>{cliente.telefono}
                     </p>
                     {cliente.email && (
-                      <p className="text-sm text-gray-500 flex items-center">
-                        <span className="font-medium mr-1">Email:</span> {cliente.email}
+                      <p className="text-sm text-gray-500">
+                        <span className="font-medium mr-1">Email:</span>{cliente.email}
                       </p>
                     )}
                   </div>
