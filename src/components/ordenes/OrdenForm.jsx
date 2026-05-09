@@ -11,10 +11,30 @@ const OrdenForm = ({ hook, clientesHook }) => {
   const { clientes } = clientesHook;
 
   const [clienteNombre, setClienteNombre] = useState("");
+  const [clienteTelefono, setClienteTelefono] = useState("");
+  const [isManual, setIsManual] = useState(false);
   const [servicio, setServicio] = useState("");
   const [error, setError] = useState("");
   const [exito, setExito] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleClienteSelect = (e) => {
+    const value = e.target.value;
+    if (value === "manual") {
+      setIsManual(true);
+      setClienteNombre("");
+      setClienteTelefono("");
+    } else {
+      setIsManual(false);
+      setClienteNombre(value);
+      const clienteSeleccionado = clientes.find((c) => c.nombre === value);
+      if (clienteSeleccionado) {
+        setClienteTelefono(clienteSeleccionado.telefono || "");
+      } else {
+        setClienteTelefono("");
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,8 +45,10 @@ const OrdenForm = ({ hook, clientesHook }) => {
     setLoading(true);
     setError("");
     try {
-      await addOrden({ cliente: clienteNombre, servicio });
+      await addOrden({ cliente: clienteNombre, cliente_telefono: clienteTelefono, servicio });
       setClienteNombre("");
+      setClienteTelefono("");
+      setIsManual(false);
       setServicio("");
       setExito(true);
       setTimeout(() => setExito(false), 3000);
@@ -71,10 +93,10 @@ const OrdenForm = ({ hook, clientesHook }) => {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-          {clientes.length > 0 ? (
+          {clientes.length > 0 && !isManual ? (
             <select
               value={clienteNombre}
-              onChange={(e) => setClienteNombre(e.target.value)}
+              onChange={handleClienteSelect}
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
             >
               <option value="">Selecciona un cliente</option>
@@ -83,15 +105,34 @@ const OrdenForm = ({ hook, clientesHook }) => {
                   {c.nombre} — {c.telefono}
                 </option>
               ))}
+              <option value="manual">+ Ingresar manualmente</option>
             </select>
           ) : (
-            <input
-              type="text"
-              placeholder="Nombre del cliente"
-              value={clienteNombre}
-              onChange={(e) => setClienteNombre(e.target.value)}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
-            />
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Nombre del cliente"
+                value={clienteNombre}
+                onChange={(e) => setClienteNombre(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              />
+              <input
+                type="tel"
+                placeholder="Teléfono del cliente (Opcional)"
+                value={clienteTelefono}
+                onChange={(e) => setClienteTelefono(e.target.value)}
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+              />
+              {clientes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsManual(false)}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Volver a seleccionar cliente
+                </button>
+              )}
+            </div>
           )}
         </div>
 

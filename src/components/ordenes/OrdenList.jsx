@@ -205,6 +205,12 @@ const imprimirFactura = (orden) => {
           <span class="key">Nombre</span>
           <span class="val">${orden.cliente}</span>
         </div>
+        ${orden.cliente_telefono ? `
+        <div class="fila">
+          <span class="key">Teléfono</span>
+          <span class="val">${orden.cliente_telefono}</span>
+        </div>
+        ` : ""}
       </div>
 
       <div class="seccion">
@@ -320,7 +326,13 @@ const OrdenList = ({ hook }) => {
                     </span>
                   </div>
                   <p className="font-semibold text-gray-800 mt-1">{o.cliente}</p>
-                  <p className="text-sm text-gray-500">{servicioLabel[o.servicio] || o.servicio}</p>
+                  {o.cliente_telefono && (
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      <span className="font-medium mr-1">Tel:</span>
+                      {o.cliente_telefono}
+                    </p>
+                  )}
+                  <p className="text-sm text-gray-500 mt-1">{servicioLabel[o.servicio] || o.servicio}</p>
                   <p className="text-xs text-gray-300 mt-1">{formatFecha(o.createdAt)}</p>
                 </div>
 
