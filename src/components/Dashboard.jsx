@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { useOrdenes } from "@/hooks/useOrdenes";
 
 // ─── Precios por servicio ────────────────────────────────────────────────────
 const PRECIOS = {
@@ -52,6 +51,12 @@ const Icon = {
         d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
     </svg>
   ),
+  Trash: () => (
+    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  ),
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -95,7 +100,6 @@ const formatMoney = (n) =>
   });
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
-
 const StatCard = ({ icon: IconComp, label, value, color, sub }) => {
   const colors = {
     blue:   { bg: "bg-blue-50",   text: "text-blue-600",   ring: "ring-blue-100",   num: "text-blue-700" },
@@ -104,7 +108,6 @@ const StatCard = ({ icon: IconComp, label, value, color, sub }) => {
     purple: { bg: "bg-purple-50", text: "text-purple-600", ring: "ring-purple-100", num: "text-purple-700" },
   };
   const c = colors[color] || colors.blue;
-
   return (
     <div className={`bg-white rounded-2xl shadow-sm ring-1 ${c.ring} p-5 flex items-start gap-4 hover:shadow-md transition-shadow`}>
       <div className={`${c.bg} ${c.text} p-3 rounded-xl shrink-0`}>
@@ -164,8 +167,8 @@ const EstadoBadge = ({ estado }) => {
 };
 
 // ─── DASHBOARD PRINCIPAL ─────────────────────────────────────────────────────
-const Dashboard = () => {
-  const { ordenes = [], loading } = useOrdenes();
+const Dashboard = ({ ordenesHook }) => {
+  const { ordenes = [], loading, deleteOrden } = ordenesHook;
 
   const stats = useMemo(() => {
     const hoy        = ordenes.filter((o) => isHoy(o.createdAt));
@@ -174,7 +177,6 @@ const Dashboard = () => {
     const listas     = ordenes.filter((o) => o.estado === "lista");
     const atrasadas  = ordenes.filter(isAtrasada);
 
-    // Ingresos: órdenes que ya avanzaron de "recibida"
     const activas = ordenes.filter((o) => o.estado !== "recibida");
     const ingresosPorServicio = {};
     activas.forEach((o) => {
@@ -189,9 +191,11 @@ const Dashboard = () => {
       .filter((o) => o.estado !== "recibida")
       .reduce((sum, o) => sum + (PRECIOS[o.servicio] || 0), 0);
 
-    return { hoy: hoy.length, semana: semana.length, pendientes: pendientes.length,
+    return {
+      hoy: hoy.length, semana: semana.length, pendientes: pendientes.length,
       listas: listas.length, atrasadas, ingresosPorServicio, totalIngresos,
-      ingresoHoy, listasSinRecoger: listas };
+      ingresoHoy, listasSinRecoger: listas,
+    };
   }, [ordenes]);
 
   if (loading) {
@@ -207,6 +211,12 @@ const Dashboard = () => {
 
   const maxIngreso = Math.max(...Object.values(stats.ingresosPorServicio).map((v) => v.monto), 1);
 
+  const handleEliminar = (orden) => {
+    if (window.confirm(`¿Eliminar la orden ${orden.ticket}?`)) {
+      deleteOrden(orden.id);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-8">
 
@@ -217,6 +227,7 @@ const Dashboard = () => {
             <Icon.Bell /> Alertas
           </h3>
 
+          {/* ÓRDENES ATRASADAS */}
           {stats.atrasadas.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex items-start gap-3">
               <div className="text-red-500 shrink-0 mt-0.5"><Icon.AlertTriangle /></div>
@@ -230,6 +241,13 @@ const Dashboard = () => {
                       <span className="font-mono font-bold shrink-0">{o.ticket}</span>
                       <span className="truncate flex-1 text-center">{o.cliente}</span>
                       <EstadoBadge estado={o.estado} />
+                      <button
+                        onClick={() => handleEliminar(o)}
+                        className="shrink-0 p-1 hover:text-red-900 hover:bg-red-200 rounded-lg transition-all"
+                        title="Eliminar orden"
+                      >
+                        <Icon.Trash />
+                      </button>
                     </div>
                   ))}
                   {stats.atrasadas.length > 3 && (
@@ -240,6 +258,7 @@ const Dashboard = () => {
             </div>
           )}
 
+          {/* ÓRDENES LISTAS SIN RECOGER */}
           {stats.listasSinRecoger.length > 0 && (
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-start gap-3">
               <div className="text-green-500 shrink-0 mt-0.5"><Icon.CheckCircle /></div>
@@ -253,6 +272,13 @@ const Dashboard = () => {
                       <span className="font-mono font-bold shrink-0">{o.ticket}</span>
                       <span className="truncate flex-1 text-center">{o.cliente}</span>
                       <span className="text-green-500 shrink-0">{o.servicio}</span>
+                      <button
+                        onClick={() => handleEliminar(o)}
+                        className="shrink-0 p-1 hover:text-green-900 hover:bg-green-200 rounded-lg transition-all"
+                        title="Eliminar orden"
+                      >
+                        <Icon.Trash />
+                      </button>
                     </div>
                   ))}
                   {stats.listasSinRecoger.length > 3 && (
